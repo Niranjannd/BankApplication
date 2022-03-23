@@ -1,8 +1,9 @@
 package UserInterface;
 
 import java.time.LocalDate;
-import java.util.Random;
+import java.util.HashMap;
 import java.util.Scanner;
+import java.util.regex.*;
 
 import entity.Account;
 import service.AccountServiceImpl;
@@ -10,11 +11,51 @@ import service.AccountServiceInterface;
 
 public class FrontPage {
 
+	
 	AccountServiceInterface serviceI = new AccountServiceImpl();
 		Account acc = new Account();
 	
 	
 	Scanner scan = new Scanner(System.in);
+	
+	static int position;
+	static String unique = "Hi_bank";
+	
+	public void chose()
+	{
+		FrontPage page = new FrontPage();
+		
+		System.out.println("Chose from below");
+		System.out.println("1. Employee");	
+		System.out.println("2. Customer");
+		
+		position = scan.nextInt();
+		if(position == 1)
+		{
+			System.out.println("Please enter your unique code");
+			String uni = scan.next();
+			if(unique.equals(uni))
+			{
+				page.homePage();
+			}
+			else
+			{
+				System.out.println("incorrect unique code");
+				page.chose();
+			}
+		}
+		
+		else if(position == 2)
+		{
+			page.homePage();
+		}
+		else {
+		
+		System.out.println("Please chose from mentioned options.");
+		page.chose();
+		}
+		
+	}
 	
 	public void homePage()
 	{
@@ -68,12 +109,15 @@ public class FrontPage {
 				
 			}else
 			{
-				acc.setAccountAdhaar(accountAdhaar);
 				flag1 = 1;
+				Account checkAcc = serviceI.getAccountDetails(accountAdhaar);
+				if(checkAcc != null)
+				{
+					System.out.println("There is already an account registered with this Adhaar number, try to login");
+					page.homePage();
+				}	
 			}
-		}
-		
-		
+		}	
 		
 		System.out.println("Chose Account Type 1 or 2");
 		System.out.println("1. Student account");
@@ -115,16 +159,36 @@ public class FrontPage {
 					flag = 1;
 				}
 			}
-			
-			
 		}
 		
+		int flag = 2;
 		System.out.println("Please set your password for application access");
-		String password = scan.next();
-		acc.setPassword(password);
-	
-		serviceI.createAccount(acc);	
-		page.homePage();
+		while(flag == 2)
+		{
+			String password = scan.next();
+			
+			 String regex = "^(?=.*[0-9])"
+	                + "(?=.*[a-z])(?=.*[A-Z])"
+	                + "(?=.*[@#$%^&+=])"
+	                + "(?=\\S+$).{8,20}$";
+			 Pattern p = Pattern.compile(regex);
+			 
+			 Matcher m = p.matcher(password);
+			 
+			 
+			 if(m.matches())
+			 {
+				acc.setPassword(password);	
+				serviceI.createAccount(acc);	
+				page.homePage();
+				flag =  3;
+			 }
+			 else
+			 {
+				 System.out.println("Password is not valid, Please must include atleast 1 digit, 1 lower case, 1 uppercase, 1 special character with no space and should be between 7 and 21 characters");
+			 }
+		
+		}
 	}
 	
 	public void login()
@@ -161,18 +225,38 @@ public class FrontPage {
 		System.out.println("************************");
 		System.out.println("Welcome to the Home Page "+user.getAccountName());
 		System.out.println("Please chose from below");
-		System.out.println("1. Bank statement");
-		System.out.println("2. Add balance to your account");
-		System.out.println("3. Withdraw the balance from your account ");
-		System.out.println("4. Transfer balance to other account");
-		System.out.println("5. Check full account details");
-		System.out.println("6. Delete your account from bank");
-		System.out.println("7. Log out");
+		
+		if(position == 1)
+			{
+			System.out.println("0. Check all present account details");
+			}	
+	
+			System.out.println("1. Check Bank statement");
+			System.out.println("2. Add balance to your account");
+			System.out.println("3. Withdraw the balance from your account ");
+			System.out.println("4. Transfer balance to other account");
+			System.out.println("5. Check full account details");
+			System.out.println("6. Delete your account from bank");
+			System.out.println("7. Log out");	
+		
+		
 
 		int input = scan.nextInt();
 		
 		switch(input)
 		{
+		
+		case 0:
+			if(position == 1)
+			{
+				allAccounts(user);
+				break;
+			}
+			else
+			{
+				System.out.println("Please chose from mentioned options.");
+				page.welcome(user);
+			}
 		case 1:
 			statement(user);
 			break;
@@ -201,12 +285,20 @@ public class FrontPage {
 		case 7 :
 			logOut();
 			break;
-			
 
 		default:
 			System.out.println("Please chose from mentioned options.");
 			page.welcome(user);
 		}
+	}
+	
+	public void allAccounts(Account user)
+	{
+		FrontPage page1 = new FrontPage();
+	
+		System.out.println(serviceI.allAccounts());
+		page1.welcome(user);
+	
 	}
 	
 	public void statement(Account user)
@@ -269,31 +361,29 @@ public class FrontPage {
 	{
 		FrontPage page1 = new FrontPage();
 		
-		System.out.println("If you still want to delete your account enter 1 else enter any other key to go back to menu ");
+		System.out.println("If you still want to delete your account enter 1 else press any other key to go back to menu ");
 		int num = scan.nextInt();
 		System.out.println(user.getAccountName());
 		if(num == 1)
 		{
 			serviceI.removeAccount(user);
+			page1.homePage();
 		}
 		else
-			System.out.println("ss");
 			page1.welcome(user);
 	}
 	
 	public void logOut()
 	{
 		FrontPage page = new FrontPage();
-		page.homePage();
+		page.chose();
 	}
 	
 	
 	public static void main(String[] args) {
-		
+	
 		FrontPage page = new FrontPage();	
-		page.homePage();
-		
-		
-	}
+		page.chose();
+	}	
 
 }
